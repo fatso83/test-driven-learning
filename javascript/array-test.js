@@ -1,4 +1,9 @@
-buster = require("buster")
+/** for hybrid testing
+ * @see http://docs.busterjs.org/en/latest/hybrid-testing/
+ */
+if (typeof module == "object" && typeof require == "function") {
+    var buster = require("buster");
+}
 
 buster.testCase("Array Tests", {
   "array splice should modify array" : function() {
