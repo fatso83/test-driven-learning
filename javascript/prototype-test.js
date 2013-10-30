@@ -1,6 +1,7 @@
 if (typeof module == "object" && typeof require == "function") {
 	var buster = require("buster");
 }
+var assert = buster.referee.assert;
 
 buster.testCase("Prototype Tests", {
 	"A prototype's properties are shared and mutable through inheriting objects" : function() {

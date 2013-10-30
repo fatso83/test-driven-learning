@@ -1,6 +1,7 @@
 /** @see http://docs.busterjs.org/en/latest/hybrid-testing/ */
 var config = module.exports;
 
+
 config["Tests"] = {
     rootPath: "..",
     tests: [
@@ -11,7 +12,6 @@ config["Tests"] = {
 config["Browser tests"] = {
     extends: "Tests",
     environment: "browser"
-    //sources: ["lib**/*.js"]
 };
 
 config["Node tests"] = {

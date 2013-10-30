@@ -4,6 +4,7 @@
 if (typeof module == "object" && typeof require == "function") {
     var buster = require("buster");
 }
+var assert = buster.referee.assert;
 
 buster.testCase("Array Tests", {
   "array splice should modify array" : function() {
