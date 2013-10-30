@@ -1,0 +1,10 @@
+{
+  "name": "test-driven-learning",
+  "version": "1.0.0",
+  "description": "Learning javascript by testing",
+  "dependencies" : { 
+    "buster" : "*",
+    "jquery" : "*",
+    "sinon" : "*"
+  }
+}
