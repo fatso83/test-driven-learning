@@ -1,1 +1,2 @@
-Just run `buster test` from the current directory
+Install the dependencies by running `npm install`
+Run the tests by issuing `npm test`
