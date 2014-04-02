@@ -1,48 +1,38 @@
-/**
- * @author carl-erik.kopseng
- * @date   30.10.13.
- */
-/** for hybrid testing
- * @see http://docs.busterjs.org/en/latest/hybrid-testing/
- */
-if (typeof module == "object" && typeof require == "function") {
-	var buster = require("buster");
-}
-
 var sinon = require('sinon'),
-	$ = require('jquery');
-var assert = buster.referee.assert;
+	$ = require('jquery'),
+	assert = require('assert');
 
 
-buster.testCase("deferred.then():", {
-	"fires after a resolved deferred" : function () {
+describe("deferred.then():", function () {
+
+	it("should fire after a resolved deferred", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
 		dfd.then(spy);
 		dfd.resolve();
 		assert(spy.calledOnce);
-	},
+	});
 
-	"does not fire after a rejected deferred" : function () {
+	it("should not fire after a rejected deferred", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
 		dfd.then(spy);
 		dfd.reject();
 		assert(spy.notCalled);
-	},
+	});
 
-	"fires after a done() callback" : function () {
+	it("should fire after a done() callback", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
 		dfd.done(sinon.stub()).then(spy);
 		dfd.resolve();
 		assert(spy.calledOnce);
-	},
+	});
 
-	"fires if a done() callback is rejected" : function () {
+	it("should fire if a done() callback is rejected", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
@@ -56,9 +46,9 @@ buster.testCase("deferred.then():", {
 
 		dfd.resolve();
 		assert(spy.calledOnce);
-	},
+	});
 
-	"only error callback is fired if a previous then() callback is rejected" : function () {
+	it("should only error callback is fired if a previous then() callback is rejected", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy(),
 			errorSpy = sinon.spy();
@@ -69,14 +59,14 @@ buster.testCase("deferred.then():", {
 				dfd.reject();
 				return dfd;
 			})
-			.then(spy,errorSpy);
+			.then(spy, errorSpy);
 
 		dfd.resolve();
 		assert(spy.notCalled);
 		assert(errorSpy.calledOnce);
-	},
+	});
 
-	"is resolved with the original resolved value" : function () {
+	it("should is resolved with the original resolved value", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
@@ -85,9 +75,9 @@ buster.testCase("deferred.then():", {
 
 		dfd.resolve("foo");
 		assert(spy.calledWith("foo"));
-	},
+	});
 
-	"is called with the previous then()'s returned value" : function () {
+	it("should is called with the previous then()'s returned value", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
@@ -99,9 +89,9 @@ buster.testCase("deferred.then():", {
 
 		dfd.resolve("foo");
 		assert(spy.calledWith(2));
-	},
+	});
 
-	"is not called with the previous done()'s returned value" : function () {
+	it("should is not called with the previous done()'s returned value", function () {
 		var dfd = $.Deferred(),
 			spy = sinon.spy();
 
@@ -112,6 +102,6 @@ buster.testCase("deferred.then():", {
 			.then(spy);
 
 		dfd.resolve("foo");
-		assert(spy.calledWith("foo"),"foo");
-	}
+		assert(spy.calledWith("foo"), "foo");
+	});
 });

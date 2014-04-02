@@ -1,28 +1,25 @@
-if (typeof module == "object" && typeof require == "function") {
-	var buster = require("buster");
-}
-var assert = buster.referee.assert;
+var assert = require('assert');
 
-buster.testCase("Prototype Tests", {
-	"A prototype's properties are shared and mutable through inheriting objects" : function() {
+describe("Prototype Tests", function(){
+it("should A prototype's properties are shared and mutable through inheriting objects",function() {
 		function Super () {
 		}
 		Super.prototype.list = [];
 
 		s = new Super;
 		s.list.push("foo");
-		assert.equals(["foo"], Super.prototype.list);
-		assert.equals(s.list, Super.prototype.list);
-	},
+		assert.deepEqual(["foo"], Super.prototype.list);
+		assert.deepEqual(s.list, Super.prototype.list);
+	});
 
-	"A property created in the prototype constructor is not shared" : function() {
+it("should A property created in the prototype constructor is not shared",function() {
 		function Super () {
 			this.list = [];
 		}
 
 		s = new Super;
 		s.list.push("foo");
-		assert.equals(undefined, Super.prototype.list);
-		assert.equals(["foo"], s.list);
-	}
+		assert.deepEqual(undefined, Super.prototype.list);
+		assert.deepEqual(["foo"], s.list);
+	});
 });
