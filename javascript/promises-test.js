@@ -22,10 +22,8 @@ describe('then chaining', function () {
 			p3 = p2.then(function () {
 				resolves.push('p2');
 				throw Error();
-			}),
-			p3
-		.
-		then(
+			});
+		p3.then(
 			function () { resolves.push('never called'); }
 		);
 
