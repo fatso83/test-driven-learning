@@ -93,6 +93,25 @@ describe('then chaining', function () {
 			done();
 		})
 	});
+
+	it('should bubble errors up the chain until the first error handler', function (done) {
+		this.timeout(100);
+		var p = pinkySwear();
+
+		function dummy () {
+			return function () {
+				console.error("Should not be called");
+			};
+		}
+
+		p.then(dummy())
+			.then(dummy())
+			.then(dummy(), function onerror () {
+				done();
+			})
+
+		p(false, [new Error('an error')]);
+	});
 });
 
 describe('pinkySwear\'s error function', function () {
@@ -131,5 +150,25 @@ describe('pinkySwear\'s error function', function () {
 
 		p1(true);
 
+	});
+
+	it('should bubble errors up the chain until the first error handler', function (done) {
+		this.timeout(100);
+		var p = pinkySwear();
+
+		function dummy () {
+			return function () {
+				console.error("Should never end up here!");
+			};
+		}
+
+		p.then(dummy())
+			.then(dummy())
+			.error(function () {
+				done();
+			})
+			.error(dummy());
+
+		p(false, [new Error('an error')]);
 	});
 });
