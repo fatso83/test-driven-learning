@@ -1,7 +1,7 @@
 /**
  * Tests for understanding Promises chaining
  *
- * Some tests for the utility functions in pinkySwear
+ * Some additional tests for understanding the utility functions in pinkySwear
  *
  * @author carl-erik.kopseng
  * @date   02.04.14.
@@ -12,61 +12,90 @@ var pinkySwear = require('pinkyswear'),
 	when = require('./utils').when;
 
 
+/**
+ * Utility function for creating promise returning functions
+ *
+ * @param [returnValue] {*} the value that should be returned
+ * @param [reject] {boolean} default false (meaning it is resolved)
+ * @returns Function returning Promise
+ */
+function createPromise (returnValue, reject) {
+	var p = pinkySwear();
+
+	p(reject === undefined ? true : reject, returnValue ? [returnValue] : undefined);
+
+	return p;
+}
+
+function dummy () {
+	return function () {
+		console.error("Should never end up here!");
+	};
+}
+
 describe('then chaining', function () {
+	this.timeout(90);
+
+	it('should pass returned value from the the onFulfilled function to the next promise', function (done) {
+		createPromise(42).then(function (res) {
+			res.should.equal(42);
+			done();
+		});
+	});
+
+	it('should pass returned value from the the onRejected function to the next promise', function (done) {
+		createPromise(-123, false)
+			.then(0, function (res) {
+				res.should.equal(-123);
+				done();
+			})
+	});
 
 	it('should stop success chaining at the first error', function (done) {
-		var resolves = [];
+		var steps = [], p2, p3;
 
-		var p1 = pinkySwear(),
-			p2 = p1.then(function () { resolves.push('p1'); }),
-			p3 = p2.then(function () {
-				resolves.push('p2');
-				throw Error();
+		p2 = createPromise('p1')
+			.then(function (res) {
+				steps.push(res);
+				return 'p2';
 			});
-		p3.then(
-			function () { resolves.push('never called'); }
-		);
+		p3 = p2.then(function (res) {
+			steps.push(res);
+			throw Error();
+		});
 
-		p1(true);
+		p3.then(function () { steps.push('never called'); });
 
 		setTimeout(function () {
-			resolves.should.eql(['p1', 'p2']);
+			steps.should.eql(['p1', 'p2']);
 			done();
 		}, 20);
 	});
 
 	it('should continue chaining after a successful error handler', function (done) {
-		var resolves = [];
 
-		var willFail = pinkySwear();
-		willFail.then('wont happen', function onerror () {return 'OK'; })
-			.then(function (result) {
-				result.should.equal('OK');
-				resolves.push('error handled');
+		createPromise(false, new Error('an error'))
+			.then('wont happen', function onerror () { /* handle error */ })
+			.then(function () {
+				done();
 			});
-		willFail(false, [new Error()]);
-
-		setTimeout(function () {
-			resolves.should.eql(['error handled']);
-			done();
-		}, 20);
 	});
 
 	it('should run all attached then\'s to a promise', function (done) {
-		var resolves = [];
+		var steps = [];
 
 		var p1 = pinkySwear();
-		p1.then(function () { resolves.push('p1 a'); });
-		p1.then(function () { resolves.push('p1 b'); });
+		p1.then(function () { steps.push('p1 a'); });
+		p1.then(function () { steps.push('p1 b'); });
 		p1.then(function () {
-			resolves.push('p1 error');
+			steps.push('p1 error');
 			throw Error();
 		});
 
 		p1(true);
 
 		setTimeout(function () {
-			resolves.should.eql(['p1 a', 'p1 b', 'p1 error']);
+			steps.should.eql(['p1 a', 'p1 b', 'p1 error']);
 			done();
 		}, 20);
 	});
@@ -156,12 +185,6 @@ describe('pinkySwear\'s error function', function () {
 		this.timeout(100);
 		var p = pinkySwear();
 
-		function dummy () {
-			return function () {
-				console.error("Should never end up here!");
-			};
-		}
-
 		p.then(dummy())
 			.then(dummy())
 			.error(function () {
@@ -170,5 +193,39 @@ describe('pinkySwear\'s error function', function () {
 			.error(dummy());
 
 		p(false, [new Error('an error')]);
+	});
+});
+
+describe('possible error in pinkyswear implementation', function () {
+	this.timeout(100);
+
+	it('should pass multiple arguments on 1', function (done) {
+
+		var p = pinkySwear();
+		p(true, [3, 2, 1]);
+
+		p.then(function (r1, r2, r3) {
+				r1.should.equal(3);
+				r2.should.equal(2);
+				r3.should.equal(1);
+				done();
+			}).error(done);
+	});
+
+	it('should pass multiple arguments on 2', function (done) {
+		var p = pinkySwear();
+		p(true);
+		p.then(function () {
+			var p = pinkySwear();
+			p(true, [3, 2, 1]);
+			return p;
+		})
+			.then(function (r1, r2, r3) {
+				r1.should.equal(3);
+				r2.should.equal(2);
+				r3.should.equal(1);
+				done();
+			})
+			.error(done);
 	});
 });
