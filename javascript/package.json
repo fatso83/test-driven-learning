@@ -2,15 +2,21 @@
   "name": "test-driven-learning",
   "version": "1.0.0",
   "description": "Learning javascript by testing",
-  "devDependencies": {
-    "jquery": "~1.8.3",
-    "sinon": "*",
-    "jsdom": "~0.8.10",
-    "mocha": "^1.18.2",
-    "should": "^3.2.0",
-    "pinkyswear": "^2.0.1"
-  },
   "scripts": {
-    "test": "./node_modules/.bin/mocha ."
+    "test": "run-p test-node test-browser",
+    "test-node": "mocha '*test.js'",
+    "test-browser": "mochify '*test-browser.js'"
+  },
+  "dependencies": {
+    "jquery": "^1.12.4",
+    "jsdom": "~0.8.10",
+    "mocha": "^4.0.1",
+    "mochify": "^4.0.0",
+    "npm-run-all": "^4.1.2",
+    "pinkyswear": "^2.0.1",
+    "redux": "^3.7.2",
+    "reselect": "^3.0.1",
+    "should": "^3.2.0",
+    "sinon": "^4.1.2"
   }
 }

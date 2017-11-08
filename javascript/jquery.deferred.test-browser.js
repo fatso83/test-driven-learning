@@ -1,7 +1,9 @@
+// due to jQuery this requires a window object/DOM
+// Run using mochify
+
 var sinon = require('sinon'),
 	$ = require('jquery'),
 	assert = require('assert');
-
 
 describe("deferred.then():", function () {
 
