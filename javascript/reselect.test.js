@@ -4,6 +4,7 @@ const { createSelector } = require('reselect');
 
 
 describe('reselect', ()=>{
+
     it('should memoize calls to to a selector', ()=>{
         const state = {
             elems: ['foo', 'bar', 'foo']
@@ -15,6 +16,20 @@ describe('reselect', ()=>{
         getNumberOfFoos(state); getNumberOfFoos(state); getNumberOfFoos(state);
 
         assert.equal(getFoos.callCount, 1);
+    });
+
+    it('should create a simple memoized selector out of a basic selector', ()=>{
+        const state = {
+            elems: ['foo', 'bar', 'foo']
+        };
+
+        const getElems = sinon.spy(state => state.elems);
+        const memoizedGetElems = createSelector(getElems, elems => elems);
+
+        memoizedGetElems(state); memoizedGetElems(state); memoizedGetElems(state); 
+
+        assert(sinon.match.array.deepEquals(memoizedGetElems(state), getElems(state)))
+        assert.equal(getElems.callCount, 2);
     });
 
     it('should memoize calls to to a selector, given both state and props', ()=>{
