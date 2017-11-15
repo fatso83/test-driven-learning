@@ -143,8 +143,7 @@ describe('then chaining', function () {
 	});
 });
 
-// seem to fail when tried in 2017
-describe.skip('pinkySwear\'s error function', function () {
+describe('pinkySwear\'s error function', function () {
 
 	it('should be equal to using then(0,fn)', function (done) {
 		var resolves = [];
@@ -197,37 +196,33 @@ describe.skip('pinkySwear\'s error function', function () {
 	});
 });
 
-// seem to fail when tried in 2017
-describe.skip('possible error in pinkyswear implementation', function () {
+describe('possible error in pinkyswear implementation', function () {
 	this.timeout(100);
 
-	it('should pass multiple arguments on 1', function (done) {
+	it('should pass multiple arguments on 1', function () {
 
 		var p = pinkySwear();
 		p(true, [3, 2, 1]);
 
-		p.then(function (r1, r2, r3) {
+		return p.then(function (r1, r2, r3) {
 				r1.should.equal(3);
 				r2.should.equal(2);
 				r3.should.equal(1);
-				done();
-			}).error(done);
+			})
 	});
 
-	it('should pass multiple arguments on 2', function (done) {
-		var p = pinkySwear();
-		p(true);
-		p.then(function () {
-			var p = pinkySwear();
-			p(true, [3, 2, 1]);
-			return p;
-		})
-			.then(function (r1, r2, r3) {
-				r1.should.equal(3);
-				r2.should.equal(2);
-				r3.should.equal(1);
-				done();
-			})
-			.error(done);
-	});
+    it('should pass multiple arguments on 2', function () {
+        var p = pinkySwear();
+        p(true);
+
+        return p.then(function () {
+            var p = pinkySwear();
+            p(true, [3, 2, 1]);
+            return p;
+        }).then(function (r1, r2, r3) {
+            r1.should.equal(3);
+            r2.should.equal(2);
+            r3.should.equal(1);
+        })
+    });
 });

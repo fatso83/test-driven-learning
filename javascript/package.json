@@ -12,7 +12,7 @@
     "mocha": "^4.0.1",
     "mochify": "^4.0.0",
     "npm-run-all": "^4.1.2",
-    "pinkyswear": "^2.0.1",
+    "pinkyswear": "2.0.2",
     "redux": "^3.7.2",
     "reselect": "^3.0.1",
     "should": "^3.2.0",
