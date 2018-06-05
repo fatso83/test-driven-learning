@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.shouldHaveThrown;
 
 
 public class OutHandlerBehaviourTest {
@@ -16,7 +15,7 @@ public class OutHandlerBehaviourTest {
         };
     }
 
-    static ChannelOutboundHandlerAdapter errorThrowingOutHandler() {
+    private static ChannelOutboundHandlerAdapter errorThrowingOutHandler() {
         return new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
@@ -25,7 +24,7 @@ public class OutHandlerBehaviourTest {
         };
     }
 
-    static ChannelInboundHandlerAdapter mirrorInHandler() {
+    private static ChannelInboundHandlerAdapter mirrorInHandler() {
         return new ChannelInboundHandlerAdapter() {
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) {
@@ -77,7 +76,7 @@ public class OutHandlerBehaviourTest {
         );
 
         channel.writeInbound("hello");
-        channel.checkException();
+        // channel.checkException(); // for inbound exceptions
         String result = channel.readOutbound();
         assertThat(result).isNull();
     }
