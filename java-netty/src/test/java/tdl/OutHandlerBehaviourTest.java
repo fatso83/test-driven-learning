@@ -10,16 +10,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class OutHandlerBehaviourTest {
 
-    static ChannelHandlerAdapter dummyOutHandler() {
-        return new ChannelDuplexHandler() {
+    static ChannelOutboundHandlerAdapter outboundHandlerNotPassingOnPromise() {
+        return new ChannelOutboundHandlerAdapter() {
             @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                super.channelRead(ctx, msg);
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+                ctx.write(msg);
             }
+        };
+    }
 
+    private static ChannelOutboundHandlerAdapter outboundHandlerPassingOnPromise() {
+        return new ChannelOutboundHandlerAdapter() {
             @Override
-            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                super.write(ctx, msg, promise);
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+               ctx.write(msg, promise);
+            }
+        };
+    }
+
+    private static ChannelOutboundHandlerAdapter outboundHandlerWithNewPromiseInWrite() {
+        return new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+                ctx.write(msg, ctx.newPromise());
             }
         };
     }
@@ -85,14 +98,77 @@ public class OutHandlerBehaviourTest {
         );
 
         channel.writeInbound("hello");
-        // channel.checkException(); // for inbound exceptions
+        // channel.checkException(); // only exceptions that we pass on through ctx.write(err);
         String result = channel.readOutbound();
         assertThat(result).isNull();
     }
 
     @Test
-    public void netty_promises_can_be_used_to_listen_for_next_handlers_success() {
-        final ChannelOutboundHandlerAdapter handlerWithListener = new ChannelOutboundHandlerAdapter() {
+    public void netty_promises_can_be_used_to_listen_for_next_handlers_success_or_failure() {
+        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+
+        final EmbeddedChannel channel = new EmbeddedChannel(
+                errorThrowingOutHandler(),
+                handlerWithListener,
+                mirrorInHandler()
+        );
+
+        channel.writeInbound("hello");
+        String result = channel.readOutbound();
+        assertThat(result).isEqualTo("removed offender");
+    }
+
+    @Test
+    public void netty_promises_can_be_used_to_listen_for_non_immediate_handlers_outcome_if_the_promise_is_passed_on() {
+        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+
+        final EmbeddedChannel channel = new EmbeddedChannel(
+                errorThrowingOutHandler(),
+                outboundHandlerPassingOnPromise(),
+                handlerWithListener,
+                mirrorInHandler()
+        );
+
+        channel.writeInbound("hello");
+        String result = channel.readOutbound();
+        assertThat(result).isEqualTo("removed offender");
+    }
+
+    @Test
+    public void netty_promises_cannot_be_used_to_listen_for_non_immediate_handlers_outcome_if_a_new_promise_is_passed_on() {
+        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+
+        final EmbeddedChannel channel = new EmbeddedChannel(
+                errorThrowingOutHandler(),
+                outboundHandlerWithNewPromiseInWrite(),
+                handlerWithListener,
+                mirrorInHandler()
+        );
+
+        channel.writeInbound("hello");
+        String result = channel.readOutbound();
+        assertThat(result).isNull();
+    }
+
+    @Test
+    public void netty_promises_cannot_be_used_to_listen_for_non_immediate_handlers_outcome_if_the_promise_is_not_passed_on() {
+        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+
+        final EmbeddedChannel channel = new EmbeddedChannel(
+                errorThrowingOutHandler(),
+                outboundHandlerNotPassingOnPromise(),
+                handlerWithListener,
+                mirrorInHandler()
+        );
+
+        channel.writeInbound("hello");
+        String result = channel.readOutbound();
+        assertThat(result).isNull();
+    }
+
+    @NotNull
+    private ChannelOutboundHandlerAdapter createErrorHandlingOutboundHandler() {
+        return new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
                 ctx.write(msg, promise.addListener((ChannelFutureListener) future -> {
@@ -108,16 +184,7 @@ public class OutHandlerBehaviourTest {
                 }));
             }
         };
-
-        final EmbeddedChannel channel = new EmbeddedChannel(
-                errorThrowingOutHandler(),
-                handlerWithListener,
-                mirrorInHandler()
-        );
-
-        channel.writeInbound("hello");
-        // channel.checkException(); // for inbound exceptions
-        String result = channel.readOutbound();
-        assertThat(result).isEqualTo("removed offender");
     }
+
+
 }
