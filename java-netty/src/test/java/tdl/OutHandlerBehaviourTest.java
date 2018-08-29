@@ -23,7 +23,7 @@ public class OutHandlerBehaviourTest {
         return new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-               ctx.write(msg, promise);
+                ctx.write(msg, promise);
             }
         };
     }
@@ -58,6 +58,26 @@ public class OutHandlerBehaviourTest {
     @NotNull
     private static String okMessage(Object msg) {
         return "OK:" + msg;
+    }
+
+    @NotNull
+    private static ChannelOutboundHandlerAdapter createErrorHandlingOutboundHandler() {
+        return new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+                ctx.write(msg, promise.addListener((ChannelFutureListener) future -> {
+                    if (!future.isSuccess()) {
+                        // can't get past the handler throwing the exception further up (nearer the head)
+                        // so we need to remove it to be able to return a result
+                        ctx.pipeline().removeFirst();
+
+                        ctx.writeAndFlush("removed offender");
+                    } else {
+                        System.err.println("Should never get here");
+                    }
+                }));
+            }
+        };
     }
 
     @Test
@@ -164,26 +184,6 @@ public class OutHandlerBehaviourTest {
         channel.writeInbound("hello");
         String result = channel.readOutbound();
         assertThat(result).isNull();
-    }
-
-    @NotNull
-    private ChannelOutboundHandlerAdapter createErrorHandlingOutboundHandler() {
-        return new ChannelOutboundHandlerAdapter() {
-            @Override
-            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-                ctx.write(msg, promise.addListener((ChannelFutureListener) future -> {
-                    if (!future.isSuccess()) {
-                        // can't get past the handler throwing the exception further up (nearer the head)
-                        // so we need to remove it to be able to return a result
-                        ctx.pipeline().removeFirst();
-
-                        ctx.writeAndFlush("removed offender");
-                    } else {
-                        System.err.println("Should never get here");
-                    }
-                }));
-            }
-        };
     }
 
 
