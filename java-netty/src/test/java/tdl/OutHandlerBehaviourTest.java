@@ -5,12 +5,14 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class OutHandlerBehaviourTest {
 
-    static ChannelOutboundHandlerAdapter outboundHandlerNotPassingOnPromise() {
+    private static ChannelOutboundHandlerAdapter outboundHandlerNotPassingOnPromise() {
         return new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
@@ -56,12 +58,12 @@ public class OutHandlerBehaviourTest {
     }
 
     @NotNull
-    private static String okMessage(Object msg) {
+    private static String prefixOk(Object msg) {
         return "OK:" + msg;
     }
 
     @NotNull
-    private static ChannelOutboundHandlerAdapter createErrorHandlingOutboundHandler() {
+    private static ChannelOutboundHandlerAdapter createOutboundHandlerWithErrorHandlingOnPromiseListener() {
         return new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
@@ -80,12 +82,23 @@ public class OutHandlerBehaviourTest {
         };
     }
 
+
+    private static ChannelOutboundHandlerAdapter addWriteListener(ChannelFutureListener listener) {
+        return new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+                ctx.write(msg).addListener(listener);
+            }
+        };
+    }
+
+
     @Test
     public void netty_invokes_the_next_handlers_write_with_its_written_message() {
         final ChannelOutboundHandlerAdapter aHandler = new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-                ctx.write(okMessage(msg));
+                ctx.write(prefixOk(msg));
             }
         };
 
@@ -97,7 +110,7 @@ public class OutHandlerBehaviourTest {
         channel.writeInbound("hello");
         channel.flushOutbound();
         String result = channel.readOutbound();
-        assertThat(result).isEqualTo(okMessage("hello"));
+        assertThat(result).isEqualTo(prefixOk("hello"));
     }
 
     @Test
@@ -125,7 +138,7 @@ public class OutHandlerBehaviourTest {
 
     @Test
     public void netty_promises_can_be_used_to_listen_for_next_handlers_success_or_failure() {
-        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+        final ChannelOutboundHandlerAdapter handlerWithListener = createOutboundHandlerWithErrorHandlingOnPromiseListener();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
                 errorThrowingOutHandler(),
@@ -140,7 +153,7 @@ public class OutHandlerBehaviourTest {
 
     @Test
     public void netty_promises_can_be_used_to_listen_for_non_immediate_handlers_outcome_if_the_promise_is_passed_on() {
-        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+        final ChannelOutboundHandlerAdapter handlerWithListener = createOutboundHandlerWithErrorHandlingOnPromiseListener();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
                 errorThrowingOutHandler(),
@@ -156,7 +169,7 @@ public class OutHandlerBehaviourTest {
 
     @Test
     public void netty_promises_cannot_be_used_to_listen_for_non_immediate_handlers_outcome_if_a_new_promise_is_passed_on() {
-        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+        final ChannelOutboundHandlerAdapter handlerWithListener = createOutboundHandlerWithErrorHandlingOnPromiseListener();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
                 errorThrowingOutHandler(),
@@ -172,7 +185,7 @@ public class OutHandlerBehaviourTest {
 
     @Test
     public void netty_promises_cannot_be_used_to_listen_for_non_immediate_handlers_outcome_if_the_promise_is_not_passed_on() {
-        final ChannelOutboundHandlerAdapter handlerWithListener = createErrorHandlingOutboundHandler();
+        final ChannelOutboundHandlerAdapter handlerWithListener = createOutboundHandlerWithErrorHandlingOnPromiseListener();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
                 errorThrowingOutHandler(),
@@ -184,6 +197,23 @@ public class OutHandlerBehaviourTest {
         channel.writeInbound("hello");
         String result = channel.readOutbound();
         assertThat(result).isNull();
+    }
+
+
+    @Test
+    public void netty_invokes_a_write_listener_once_per_pipe_traversal_on_a_normal_write() {
+        AtomicInteger i = new AtomicInteger(0);
+
+        final ChannelFutureListener channelFutureListener = future -> i.addAndGet(1);
+
+        final EmbeddedChannel channel = new EmbeddedChannel(
+                addWriteListener(channelFutureListener),
+                mirrorInHandler()
+        );
+
+        channel.writeInbound("hello");
+        channel.flushOutbound();
+        assertThat(i.get()).isEqualTo(1);
     }
 
 
