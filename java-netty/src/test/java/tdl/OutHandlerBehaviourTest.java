@@ -337,14 +337,8 @@ public class OutHandlerBehaviourTest {
         CompletableFuture<Boolean> listenerBOp = new CompletableFuture<>();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
-                outboundHandlerPassingOnPromiseWithWriteListener(future -> {
-                    System.out.println('A');
-                    listenerAOp.complete(true);
-                }),
-                outboundHandlerPassingOnPromiseWithWriteListener(future -> {
-                    System.out.println('B');
-                    listenerBOp.complete(true);
-                }),
+                outboundHandlerPassingOnPromiseWithWriteListener(future -> listenerAOp.complete(true)),
+                outboundHandlerPassingOnPromiseWithWriteListener(future -> listenerBOp.complete(true)),
                 mirrorInHandler()
         );
 
@@ -359,12 +353,8 @@ public class OutHandlerBehaviourTest {
         final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<>();
 
         final EmbeddedChannel channel = new EmbeddedChannel(
-                outboundHandlerPassingOnPromiseWithWriteListener(future -> {
-                    queue.add("LAST");
-                }),
-                outboundHandlerPassingOnPromiseWithWriteListener(future -> {
-                    queue.add("FIRST");
-                }),
+                outboundHandlerPassingOnPromiseWithWriteListener(future -> queue.add("LAST")),
+                outboundHandlerPassingOnPromiseWithWriteListener(future -> queue.add("FIRST")),
                 mirrorInHandler()
         );
 
