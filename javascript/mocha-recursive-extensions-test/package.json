@@ -1,0 +1,16 @@
+{
+  "name": "mocha-recursive-extensions-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "test-bar": "mocha --extension bar",
+    "test-bar.js": "mocha --extension bar.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mocha": "^6.0.2"
+  }
+}
