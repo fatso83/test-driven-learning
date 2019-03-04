@@ -1,4 +1,5 @@
 # Tests to verify Mocha's `--extension` behaviour
+> Verifies (Mocha issue 3808](https://github.com/mochajs/mocha/issues/3808)
 
 According to [Mocha's own docs](https://mochajs.org/#-extension-ext-watch-extensions-ext) one should be able to specify which extensions mocha will automatically load. 
 
