@@ -9,7 +9,7 @@ It quite clearly says that by specifying an extension, the default should be cle
 
 ## Output contradicting the docs
 
-The [`test`](./test) directory only contains a single file with the extension `bar`, so this means only one file should be loaded according to the docs. Instead, four files are loaded:
+The [`test`](./test) directory only contains a single file with the extension `bar`, so this means only one file should be loaded when running `mocha --extension bar` - according to the docs. Instead, four files are loaded:
 ```
 mocha --extension bar
 
