@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
-import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.stereotype.Component
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig
@@ -18,14 +17,17 @@ class SpringAsyncTest {
     @Autowired
     lateinit var sut: MySpecialBean
 
+    @Autowired
+    lateinit var scheduler: ManualScheduler
 
-    @TestConfiguration
+
+    @TestConfiguration()
     class MyTestConfig {
         @Bean(name = ["myThreadPoolExecutor"])
         fun asyncExecutor(): ThreadPoolTaskExecutor {
             val executor = ThreadPoolTaskExecutor()
-            executor.corePoolSize = 4
-            executor.maxPoolSize = 4
+            executor.corePoolSize = 10
+            executor.maxPoolSize = 10
             executor.queueCapacity = 2000
             executor.setThreadNamePrefix("batchProcess-")
             executor.setWaitForTasksToCompleteOnShutdown(true) // to make sure it wait till the current execution complete before pod shutdown.
@@ -36,17 +38,20 @@ class SpringAsyncTest {
 
         @Bean
         fun sut(): MySpecialBean = MySpecialBean()
+
+        @Bean
+        fun manualScheduler(myThreadPoolExecutor: ThreadPoolTaskExecutor): ManualScheduler =
+            ManualScheduler(myThreadPoolExecutor);
     }
 
     @Component
-    open class MySpecialBean {
-
-//        @Async
-        @Throws(InterruptedException::class)
-        @Async("myThreadPoolExecutor") // Use the custom executor
-        open fun aFutureCompletable(): CompletableFuture<Void?> {
-            Thread.sleep(1000)
-            return CompletableFuture.completedFuture(null)
+    class ManualScheduler(val executor: ThreadPoolTaskExecutor) {
+        fun manuallyScheduledTask(function: () -> CompletableFuture<Void?>): CompletableFuture<Void?> {
+            return CompletableFuture.supplyAsync({
+                println("Executing on thread: ${Thread.currentThread().name}")
+                Thread.sleep(1000)  // Simulate a long-running task
+                null
+            }, executor)
         }
     }
 
@@ -61,6 +66,24 @@ class SpringAsyncTest {
             sut.aFutureCompletable(),
             sut.aFutureCompletable(),
             sut.aFutureCompletable()
+        ).get()
+
+        val endTime = System.currentTimeMillis()
+        val duration = endTime - startTime
+        println("Test took $duration milliseconds")
+    }
+
+    @Test
+    @Throws(InterruptedException::class, ExecutionException::class)
+    fun testManualScheduler() {
+        val startTime = System.currentTimeMillis()
+
+        CompletableFuture.allOf(
+            scheduler.manuallyScheduledTask { sut.aFutureCompletable() },
+            scheduler.manuallyScheduledTask { sut.aFutureCompletable() },
+            scheduler.manuallyScheduledTask { sut.aFutureCompletable() },
+            scheduler.manuallyScheduledTask { sut.aFutureCompletable() },
+            scheduler.manuallyScheduledTask { sut.aFutureCompletable() },
         ).get()
 
         val endTime = System.currentTimeMillis()
