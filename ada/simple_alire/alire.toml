@@ -1,0 +1,10 @@
+name = "simple_alire"
+description = "A small demo of using Alire"
+version = "0.1.0-dev"
+
+authors = ["Carl-Erik Kopseng"]
+maintainers = ["Carl-Erik Kopseng <carlerik@gmail.com>"]
+maintainers-logins = ["fatso83"]
+licenses = "MIT"
+website = ""
+tags = []
