@@ -1,0 +1,4 @@
+# typical garbage from gprbuild
+*.stderr
+*.stdout
+*.ali
