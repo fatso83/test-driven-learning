@@ -40,9 +40,9 @@ def test_using_plugin_by_injecting_then_using_plugins(my_pytester, inject_local_
 
     assert "Setting 'test_foobar' up" in result.stdout.str(), "Expected string not found"
 
-def test_pytester_changes_cwd(pytester):
+def test_pytester_changes_cwd(pytester: pytest.Pytester):
     assert original_cwd != Path.cwd()
+    assert pytester.path == Path.cwd()
 
 def test_cwd_of_normal_test_has_unchanged_cwd():
     assert original_cwd == Path.cwd()
-
